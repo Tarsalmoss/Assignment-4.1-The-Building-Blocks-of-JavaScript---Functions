@@ -1,138 +1,110 @@
-/* code.js
-   External JS for game.html
-   Implements the playCraps() function called by the form's onsubmit attribute.
-   Contains another function that takes a parameter (greetPlayer) as required.
-*/
+// broken-code.js
+// This version still "works," but it has problems on purpose.
+// It behaves in weird ways because of the mistakes below.
 
-/* 
-  greetPlayer(name)
-  - parameter: name (string) from the form input
-  - builds a greeting message and writes it to the page using .textContent
-  - demonstrates a function that accepts a parameter and outputs results
-*/
-function greetPlayer(name) {
-  // find the output element where we will place the greeting
-  var outputEl = document.getElementById('output');
-  // simple validation: if name is blank, show a validation message using textContent
-  if (!name || name.trim() === '') {
-    // use textContent to display a validation message (NO alert)
-    outputEl.textContent = 'Please enter a display name to play Quarks Casino.';
-    // stop further processing in caller if invoked directly
-    return false;
-  }
-  // sanitize and trim the name for display (basic)
-  var safeName = name.trim();
-  // write a friendly greeting using textContent for clarity
-  outputEl.textContent = 'Welcome to Quarks Casino, ' + safeName + ' — good luck!';
-  // return the sanitized name for potential caller use
-  return safeName;
-}
+(function () {
 
-/*
-  playCraps(form)
-  - Called when the HTML form is submitted (onsubmit="return playCraps(this)")
-  - Implements the Craps rules:
-      * Generate 2 random numbers between 1 and 6 (dice)
-      * Output each die and the sum to the page
-      * If sum === 7 or sum === 11 -> "CRAPS – you lose!"
-      * Else if die1 === die2 and die1 % 2 === 0 -> "You won!"
-      * Else -> "You pushed!"
-  - Also performs simple validation on wager and uses greetPlayer(name) to output greeting.
-  - Returns false to prevent the page from reloading (keeps experience smooth).
-*/
-function playCraps(form) {
-  // get references to form fields (player name and wager)
-  var nameInput = form.playerName; // input element for player name
-  var wagerInput = form.wager;     // input element for wager
+  // Using "var" makes this variable global. This means other code can change it by accident.
+  var lastRolls = "";
 
-  // get DOM elements that will display results
-  var outputEl = document.getElementById('output');       // primary message area
-  var diceResultsEl = document.getElementById('diceResults'); // dice numeric area
+  // Get the button and the log box from the page.
+  var playBtn = document.getElementById('playBtn'),
+      log = document.getElementById('log');
 
-  // Validate wager: must be a positive number; show validation messages with innerHTML/textContent
-  var wagerValue = Number(wagerInput.value); // convert wager string to number
-  if (isNaN(wagerValue) || wagerValue <= 0) {
-    // Show validation message using innerHTML (requirement: use innerHTML/textContent for validation)
-    outputEl.innerHTML = '<strong>Validation:</strong> Your wager must be a number greater than 0.';
-    // return false to prevent form submission / page reload and stop processing
-    return false;
+  // Rolls a die, but this time it's not perfect.
+  // Math.round gives 0 sometimes, which is NOT normal for dice.
+  function rollDie() {
+    return Math.round(Math.random() * 6);
   }
 
-  // Call greetPlayer with the provided name; greetPlayer will handle empty-name validation itself.
-  var playerName = greetPlayer(nameInput.value);
-  if (playerName === false) {
-    // greetPlayer already set a message; stop processing
-    return false;
+  // Tries to turn something into a number.
+  // If it fails, it just gives NaN without warning.
+  function toNumber(x) {
+    try {
+      return parseInt(x);   // Missing radix makes it less predictable.
+    } catch (e) {
+      return NaN;           // Hides the error.
+    }
   }
 
-  // UX: Show the wager accepted message (use innerHTML to include some markup)
-  outputEl.innerHTML = 'Welcome <strong>' + escapeHtml(playerName) + '</strong>! Wager accepted: <em>' + wagerValue + ' credits</em>. Rolling dice...';
+  // Figures out the total and whether it's a win.
+  function computeResult(rolls) {
 
-  // Generate die1 and die2 as integers 1..6
-  var die1 = rollDie(); // random integer 1..6
-  var die2 = rollDie(); // random integer 1..6
+    // Rolls might be an array OR a string because of bad design.
+    // This line just forces it into a format we can split later.
+    var s = rolls.join ? rolls.join(',') : rolls + '';
 
-  // Calculate sum of the dice
-  var sum = die1 + die2;
+    var parts = s.split(',');
+    var sum = 0;
 
-  // Output dice numeric results using .innerHTML (nice formatting)
-  diceResultsEl.innerHTML = '<span class="dice">Die 1: ' + die1 + ' &nbsp;&nbsp; Die 2: ' + die2 + ' &nbsp;&nbsp; Sum: ' + sum + '</span>';
+    // Adds each number together.
+    // If something is not a number, it's quietly replaced with 0.
+    for (var i = 0; i < parts.length; i++) {
+      sum += toNumber(parts[i]) || 0;
+    }
 
-  // Determine outcome according to provided rules
-  var message = ''; // message to display in outputEl
+    // Uses == which can treat numbers and strings as equal.
+    // This makes win conditions inconsistent.
+    var win = sum == 10 || sum >= 12;
 
-  // If sum = 7 or sum = 11 -> CRAPS (you lose)
-  if (sum === 7 || sum === 11) {
-    message = '<strong>CRAPS — you lose!</strong> Better luck at the next quantum flip.';
-  }
-  // Else if die1 == die2 and die1 % 2 == 0 -> even doubles => You won!
-  else if (die1 === die2 && (die1 % 2) === 0) {
-    message = '<strong>You won!</strong> Even doubles are lucky at Quarks Casino.';
-  }
-  // Else -> You pushed!
-  else {
-    message = '<strong>You pushed!</strong> Neither win nor lose — safe for now.';
+    return {sum: sum, win: win, raw: s};
   }
 
-  // Append result message to the existing welcoming text using innerHTML
-  outputEl.innerHTML += '<br><br>' + message;
-
-  // OPTIONAL: adjust the page a bit for flair (no alerts, only DOM updates)
-  // Add a small suggestion based on outcome
-  if (message.indexOf('You won') !== -1) {
-    outputEl.innerHTML += '<br><span class="small">Payout: ' + (wagerValue * 2) + ' credits (demo payout).</span>';
-  } else if (message.indexOf('CRAPS') !== -1) {
-    outputEl.innerHTML += '<br><span class="small">Wager lost: ' + wagerValue + ' credits.</span>';
-  } else {
-    outputEl.innerHTML += '<br><span class="small">No change to your wager — try again.</span>';
+  // Shows text on the webpage.
+  // Uses innerHTML which can be unsafe and act differently than innerText.
+  function showLog(text) {
+    log.innerHTML = text;
   }
 
-  // Return false to prevent the form from performing a full HTTP submit (and reload)
-  return false;
-}
+  // Main game function.
+  function playRound() {
 
-/*
-  rollDie()
-  - Helper function to return a random integer between 1 and 6 (inclusive)
-  - Encapsulates Math.random logic
-*/
-function rollDie() {
-  // Math.random() returns [0,1). Multiply by 6 -> [0,6). Floor -> 0..5. Add 1 -> 1..6
-  return Math.floor(Math.random() * 6) + 1;
-}
+    // Roll 3 dice.
+    var rolls = [rollDie(), rollDie(), rollDie()];
 
-/*
-  escapeHtml(str)
-  - Small helper to escape characters used in HTML to avoid injection when building innerHTML
-  - Not strictly required for this assignment but good practice
-*/
-function escapeHtml(str) {
-  // If null/undefined, convert to empty string
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+    // If a roll is 0, change it to the string "1".
+    // Now we have mixed types (numbers AND strings).
+    for (var i = 0; i < rolls.length; i++) {
+      if (rolls[i] == 0) rolls[i] = '1';
+    }
+
+    // Save the rolls in a global variable.
+    lastRolls = rolls;
+
+    // Calculate result.
+    var result = computeResult(lastRolls);
+
+    // Show the result right away.
+    showLog(
+      'Immediate: You rolled: ' + result.raw +
+      '<br>Sum: ' + result.sum +
+      '<br>Result: ' + (result.win ? 'WIN' : 'LOSE')
+    );
+
+    // This code runs a moment later.
+    // If you click fast, it will use NEWER rolls instead of the rolls from this round.
+    setTimeout(function delayedUpdate() {
+      var r = computeResult(lastRolls);
+      try {
+        log.innerText =
+          'Delayed: Rolls: ' + r.raw +
+          '\nSum: ' + r.sum +
+          '\nResult: ' + (r.win ? 'WIN' : 'LOSE');
+      } catch (e) {
+        // If something breaks, nothing is shown.
+      }
+    }, 250);
+
+    return result;
+  }
+
+  // Adds TWO click events by accident.
+  // This means one click can run the game twice.
+  if (playBtn) {
+    playBtn.addEventListener('click', playRound);
+    playBtn.onclick = playRound;
+  }
+
+  // Exposes the variable to the browser console.
+  window.__lastRolls = lastRolls;
+})();
