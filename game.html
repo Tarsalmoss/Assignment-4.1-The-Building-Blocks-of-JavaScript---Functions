@@ -1,16 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Java Script Funtion Demo </title>
-        <script src="code.js"></script>
-        <link href="main.css" rel="stylesheet">
-  </head>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Craps Game</title>
+
+    <!-- Minimal styling just so the page doesn't look raw -->
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f2f2f2; }
+        .box { max-width: 450px; background: #fff; padding: 20px; border-radius: 10px; margin: auto; }
+        button { padding: 10px 16px; font-size: 1rem; border-radius: 6px; }
+        #output, #diceResults { margin-top: 15px; padding: 10px; background: #eee; border-radius: 8px; }
+    </style>
+</head>
 <body>
-  <header> 
-       <h1 id="heading"> Welcome to Ian's page</h1>
-       <button onclick="updateText();">Change Text</button>
-  </header>
+
+<div class="box">
+    <h1>Simple Craps Game</h1>
+
+    <!-- Form required for the assignment -->
+    <!-- onsubmit calls playCraps(form) from code.js -->
+    <form id="simpleForm" onsubmit="return playCraps(this)">
+        <!-- REQUIRED input for name -->
+        <label>Player Name</label>
+        <input type="text" name="playerName" required />
+
+        <!-- REQUIRED input for wager -->
+        <label>Wager</label>
+        <input type="number" name="wager" min="1" required />
+
+        <br><br>
+        <button type="submit">Play Craps</button>
+    </form>
+
+    <!-- These match the output IDs used in code.js -->
+    <div id="output">Results will appear here.</div>
+    <div id="diceResults"></div>
+</div>
+
+<!-- Link external JS file -->
+<script src="code.js"></script>
+
 </body>
 </html>
