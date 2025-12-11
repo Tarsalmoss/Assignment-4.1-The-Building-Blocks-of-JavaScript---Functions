@@ -1,0 +1,356 @@
+<!--
+  strings.html
+  Author: Ian Andalon
+  Purpose: Collect first & last name + zip, validate, and reveal a secret message.
+-->
+
+<!doctype html>
+<html lang="en">
+  <!--
+    Page head: document metadata, title, and styling.
+  -->
+  <head>
+    <!-- document character encoding -->
+    <meta charset="utf-8" />
+    <!-- document viewport for responsive scaling -->
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <!-- page title shown in the browser tab -->
+    <title>Secret Strings — Friendly Form</title>
+
+    <!-- Import a Google Font for a nicer look (uses the browser's network) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+
+    <!--
+      Page styles:
+      - A soft gradient background, centered card layout
+      - Friendly rounded inputs and buttons
+      - A small decorative SVG shown as a faint pattern in the top-right
+    -->
+    <style>
+      /* set the page background, font family, and remove default margin */
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        background: linear-gradient(180deg, #f5f7fb 0%, #eef3ff 100%);
+      }
+
+      /* container card that holds the form */
+      .card {
+        width: min(720px, 94%);
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(18, 38, 63, 0.08);
+        padding: 28px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* decorative faint SVG blob in the corner */
+      .decor {
+        position: absolute;
+        top: -60px;
+        right: -60px;
+        width: 220px;
+        height: 220px;
+        opacity: 0.08;
+        pointer-events: none;
+      }
+
+      /* page header styling */
+      h1 {
+        margin: 0 0 6px 0;
+        font-size: 1.6rem;
+      }
+
+      /* subheading/description */
+      p.lead {
+        margin: 0 0 18px 0;
+        color: #51607a;
+        font-size: 0.95rem;
+      }
+
+      /* form layout: use grid for nice spacing */
+      form {
+        display: grid;
+        gap: 12px;
+      }
+
+      /* group inputs horizontally for first + last row */
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      /* inputs style */
+      input[type="text"] {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid #e3e8f0;
+        font-size: 1rem;
+        outline: none;
+      }
+
+      /* input focus style */
+      input[type="text"]:focus {
+        box-shadow: 0 0 0 4px rgba(55, 125, 255, 0.06);
+        border-color: #3b82f6;
+      }
+
+      /* submit button styling */
+      button[type="submit"] {
+        margin-top: 8px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: none;
+        background: linear-gradient(90deg, #4f46e5, #06b6d4);
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 1rem;
+      }
+
+      /* disabled button style */
+      button[disabled] {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      /* area to show validation messages */
+      .messages {
+        margin-top: 8px;
+        min-height: 40px;
+      }
+
+      /* message styles (errors are reddish, success is green) */
+      .message {
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 0.95rem;
+      }
+
+      .error {
+        background: #fff5f6;
+        color: #9b1c1c;
+        border: 1px solid #ffd6d9;
+      }
+
+      .success {
+        background: #f0fdf4;
+        color: #065f46;
+        border: 1px solid #bbf7d0;
+      }
+
+      /* secret message box hidden initially */
+      #secretBox {
+        margin-top: 14px;
+        padding: 14px;
+        border-radius: 10px;
+        background: linear-gradient(180deg,#fff,#f7fbff);
+        border: 1px dashed #bcd7ff;
+        display: none;
+      }
+
+      /* small footer credit text */
+      .credit {
+        margin-top: 14px;
+        font-size: 0.82rem;
+        color: #6b7280;
+      }
+
+      /* small image styling */
+      .hero-img {
+        width: 90px;
+        height: 90px;
+        border-radius: 12px;
+        object-fit: cover;
+        float: right;
+        margin-left: 12px;
+        box-shadow: 0 6px 18px rgba(31, 41, 55, 0.06);
+      }
+    </style>
+  </head>
+
+  <!--
+    Page body: visible content and the form.
+  -->
+  <body>
+    <!-- main card wrapper -->
+    <main class="card" aria-labelledby="pageTitle">
+      <!-- decorative faint svg blob -->
+      <svg class="decor" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path fill="#7c3aed" d="M43.6,-66.7C56.1,-59.8,66.6,-49.3,74.3,-36.5C82,-23.7,86.9,-8.5,86.1,6.7C85.3,21.9,78.9,37.1,68.3,48.9C57.7,60.7,42.8,69.1,26.6,74C10.4,78.9,-6.9,80.2,-22.3,76.3C-37.6,72.4,-50.9,63.2,-60.8,50.9C-70.7,38.6,-77.3,23.3,-80.1,6.7C-82.9,-9.9,-82,-27.9,-72.9,-42.2C-63.8,-56.6,-46.6,-67.2,-29.7,-71.4C-12.8,-75.6,3.7,-73.3,20.6,-68.5C37.5,-63.7,54.8,-56.8,43.6,-66.7Z" transform="translate(100 100)" />
+      </svg>
+
+      <!-- page title for screen readers and visible heading -->
+      <h1 id="pageTitle">Reveal the Secret — Friendly Form</h1>
+
+      <!-- short description for the user -->
+      <p class="lead">Enter your name and ZIP code. If everything checks out, a secret message will be revealed. No pop-ups — only friendly messages here!</p>
+
+      <!-- a small decorative image (hosted externally) -->
+      <img class="hero-img" src="https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=600&auto=format&fit=crop&ixlib=rb-4.0.3&s=8b7a0a0b2b3e7b2d6b6a6a6a6a6a6a6a" alt="decorative abstract art">
+
+      <!--
+        The form:
+        - Contains first name, last name, zip
+        - Uses a standard submit button
+        - User input is processed by JS (no addEventListener)
+      -->
+      <form id="userForm" novalidate>
+        <!-- row for first + last name -->
+        <div class="row">
+          <!-- first name input -->
+          <div>
+            <!-- label for accessibility -->
+            <label for="firstName">First name</label>
+            <!-- text input for first name -->
+            <input id="firstName" name="firstName" type="text" placeholder="Ada" autocomplete="given-name" required />
+          </div>
+
+          <!-- last name input -->
+          <div>
+            <!-- label for accessibility -->
+            <label for="lastName">Last name</label>
+            <!-- text input for last name -->
+            <input id="lastName" name="lastName" type="text" placeholder="Lovelace" autocomplete="family-name" required />
+          </div>
+        </div>
+
+        <!-- zip code input on its own row -->
+        <div>
+          <!-- label for zip -->
+          <label for="zip">ZIP code</label>
+          <!-- text input for zip code (we'll validate manually in JS) -->
+          <input id="zip" name="zip" type="text" placeholder="12345" inputmode="numeric" maxlength="5" required />
+        </div>
+
+        <!-- submit button for the form -->
+        <div>
+          <!-- submit triggers JS via form.onsubmit (set in script) -->
+          <button id="submitBtn" type="submit">Reveal Secret</button>
+        </div>
+
+        <!-- area to display validation messages (textContent used in JS) -->
+        <div class="messages" id="messages" aria-live="polite"></div>
+
+        <!-- hidden secret area revealed only when valid -->
+        <div id="secretBox" role="status" aria-live="polite">
+          <!-- secret heading -->
+          <strong>Secret message:</strong>
+          <!-- secret content is inserted from JS using textContent/innerHTML -->
+          <p id="secretText"></p>
+        </div>
+
+        <!-- small credit text -->
+        <div class="credit">Designed by Ian • Friendly form demo</div>
+      </form>
+    </main>
+
+    <!--
+      Script block:
+      - All JavaScript lives here (not inline in HTML attributes)
+      - We assign form.onsubmit to handle submit (no addEventListener)
+    -->
+    <script>
+      // Select the form element by its ID
+      const form = document.getElementById('userForm');
+
+      // Select the input fields that we will validate
+      const firstInput = document.getElementById('firstName');
+      const lastInput = document.getElementById('lastName');
+      const zipInput = document.getElementById('zip');
+
+      // Select the button and message containers so we can update their content
+      const submitBtn = document.getElementById('submitBtn');
+      const messages = document.getElementById('messages');
+      const secretBox = document.getElementById('secretBox');
+      const secretText = document.getElementById('secretText');
+
+      // Define the secret message text (kept in JS, not visible until validated)
+      const SECRET_MESSAGE = "✨ Congratulations — your identity passed the checks! Keep being curious. ✨";
+
+      // Assign the submit handler directly to the form's onsubmit property (no addEventListener)
+      form.onsubmit = function(event) {
+        // Prevent the browser from performing a real form submission / page reload
+        event.preventDefault();
+
+        // Clear prior messages and hide the secret area
+        messages.textContent = '';
+        secretBox.style.display = 'none';
+        secretText.textContent = '';
+
+        // Trim whitespace and read name parts
+        const firstName = firstInput.value.trim();
+        const lastName = lastInput.value.trim();
+
+        // Combine firstName + space + lastName into a single variable as required
+        const fullName = firstName + (firstName && lastName ? ' ' : '') + lastName;
+
+        // Validation: ensure the fullName has more than 0 characters
+        if (fullName.length === 0) {
+          // Show error message using textContent (no alerts)
+          messages.textContent = '';
+          const err = document.createElement('div');
+          err.className = 'message error';
+          err.textContent = 'Please enter your first and last names.';
+          messages.appendChild(err);
+          // do not continue the program if invalid
+          return;
+        }
+
+        // Validation: if the combined name is longer than 20 characters, warn and stop
+        if (fullName.length > 20) {
+          // Show error message using textContent
+          messages.textContent = '';
+          const err = document.createElement('div');
+          err.className = 'message error';
+          err.textContent = 'Warning: Your full name exceeds 20 characters. Please shorten it before continuing.';
+          messages.appendChild(err);
+          // do not continue the program if invalid
+          return;
+        }
+
+        // ZIP validation: allow only exactly 5 digits
+        const zipRaw = zipInput.value.trim();
+        // Regular expression to test for exactly 5 digits
+        const zipIsValid = /^[0-9]{5}$/.test(zipRaw);
+
+        // If zip invalid, show message and stop
+        if (!zipIsValid) {
+          // Show error message using textContent
+          messages.textContent = '';
+          const err = document.createElement('div');
+          err.className = 'message error';
+          err.textContent = 'ZIP code invalid — it must contain exactly 5 digits (e.g. 12345).';
+          messages.appendChild(err);
+          // do not continue the program if invalid
+          return;
+        }
+
+        // All checks passed — show a success message and reveal the secret
+        messages.textContent = '';
+        const ok = document.createElement('div');
+        ok.className = 'message success';
+        ok.textContent = 'All inputs valid — revealing the secret now!';
+        messages.appendChild(ok);
+
+        // Reveal the secret message by setting innerHTML/textContent (allowed)
+        // We use textContent for safety; innerHTML would be fine for basic HTML, but textContent avoids HTML injection.
+        secretText.textContent = SECRET_MESSAGE;
+
+        // Show the secret box visually
+        secretBox.style.display = 'block';
+
+        // Optionally: disable the submit button so they won't resubmit accidentally
+        submitBtn.disabled = true;
+
+        // End of form processing — nothing more to do.
+        return;
+      };
+    </script>
+  </body>
+</html>
